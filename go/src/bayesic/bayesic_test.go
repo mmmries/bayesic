@@ -1,7 +1,6 @@
 package bayesic
 
 import "testing"
-import "fmt"
 
 func createMatcher() Matcher {
   matcher := New()
@@ -13,8 +12,6 @@ func createMatcher() Matcher {
 
 func TestClassifyMatchingTokens(t *testing.T) {
   matcher := createMatcher()
-  fmt.Println(matcher.tokensByClassification)
-  fmt.Println(matcher.classificationsByToken)
   classification := matcher.Classify([]string{"once","upon","a","time"})
   probability := classification["story"]
   if probability < 0.99 {
@@ -28,5 +25,13 @@ func TestClassifyPartialMatch(t *testing.T) {
   probability := classification["story"]
   if probability < 0.9 {
     t.Errorf("expected the story probability to be over 90%%, but was %f", probability)
+  }
+}
+
+func TestReturnsNoProbabilitiesForNonsense(t *testing.T) {
+  matcher := createMatcher()
+  classification := matcher.Classify([]string{"furby"})
+  if len(classification) > 0 {
+    t.Errorf("Expected no potential matches, but got %+v", classification)
   }
 }

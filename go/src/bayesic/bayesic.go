@@ -18,8 +18,21 @@ func New() Matcher {
 
 func (matcher *Matcher) Classify(tokens []string) map[string]float64 {
   probabilities := make(map[string]float64)
-  for key := range matcher.classifications {
-    probabilities[key] = 1.0 / float64(len(matcher.classifications))
+  for i := range tokens {
+    token := tokens[i]
+    _, exists := matcher.classificationsByToken[token]
+    if exists {
+      for class := range matcher.classificationsByToken[token] {
+        p_klass, exists := probabilities[class]
+        if !exists {
+          p_klass = 1.0 / float64(len(matcher.classifications))
+        }
+        p_not_klass := 1.0 - p_klass
+        p_token_given_klass := 1.0
+        p_token_given_not_klass := (float64(len(matcher.classificationsByToken[token])) - 1.0) / float64(len(matcher.classifications))
+        probabilities[class] = (p_token_given_klass * p_klass) / ((p_token_given_klass * p_klass) + (p_token_given_not_klass * p_not_klass))
+      }
+    }
   }
   return probabilities
 }
