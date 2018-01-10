@@ -10,7 +10,7 @@ trainer = fn(training_data) ->
   matcher = Bayesic.new()
   Enum.reduce(training_data, matcher, fn(row, matcher) ->
     Bayesic.train(matcher, row.tokens, row.id)
-  end)
+  end) |> Bayesic.finalize
 end
 
 classifier = fn(matcher, matching_data) ->

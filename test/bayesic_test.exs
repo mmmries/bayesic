@@ -7,6 +7,7 @@ defmodule BayesicTest do
               |> Bayesic.train(["once","upon","a","time"], "story")
               |> Bayesic.train(["tonight","on","the","news"], "news")
               |> Bayesic.train(["it","was","the","best","of","times"], "novel")
+              |> Bayesic.finalize
     {:ok, %{matcher: matcher}}
   end
 
