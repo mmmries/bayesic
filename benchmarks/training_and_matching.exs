@@ -28,8 +28,17 @@ matching_data = matching_csv |> File.stream! |> CSV.decode!(headers: true) |> En
 end)
 
 matcher = trainer.(training_data)
+(1..10) |> Enum.each(fn(_) -> trainer.(training_data) end)
+(1..10) |> Enum.each(fn(_) -> classifier.(matcher, matching_data) end)
 
-Benchee.run(%{
-  "training" => fn -> trainer.(training_data) end,
-  "match #{Enum.count(matching_data)} rows" => fn -> classifier.(matcher, matching_data) end,
-}, time: 10, console: [comparison: false])
+:timer.tc(fn ->
+  (1..10) |> Enum.each(fn(_) -> trainer.(training_data) end)
+end) |> IO.inspect
+:timer.tc(fn ->
+  (1..10) |> Enum.each(fn(_) -> classifier.(matcher, matching_data) end)
+end) |> IO.inspect
+
+#Benchee.run(%{
+#  "training" => fn -> trainer.(training_data) end,
+#  "match #{Enum.count(matching_data)} rows" => fn -> classifier.(matcher, matching_data) end,
+#}, time: 10, console: [comparison: false])

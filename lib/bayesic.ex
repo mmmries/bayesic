@@ -1,5 +1,5 @@
 defmodule Bayesic do
-  defstruct [:classifications, :classifications_by_token, :tokens_by_classification]
+  defstruct [:port]
 
   @moduledoc """
   A string matcher that uses Bayes' Theorem to calculate the probability of a given match.
@@ -20,17 +20,8 @@ defmodule Bayesic do
       iex> Bayesic.classify(matcher, ["tonight"])
       %{"news" => 1.0}
   """
-  def classify(%Bayesic{}=matcher, tokens) do
-    tokens = Enum.filter(tokens, fn(token) -> Map.has_key?(matcher.classifications_by_token, token) end)
-    Enum.reduce(tokens, %{}, fn(token, probabilities) ->
-      Enum.reduce(matcher.classifications_by_token[token], probabilities, fn(classification, probabilities) ->
-        p_klass = probabilities[classification] || (1.0 / Enum.count(matcher.classifications))
-        p_not_klass = 1.0 - p_klass
-        p_token_given_klass = 1.0
-        p_token_given_not_klass = (Enum.count(matcher.classifications_by_token[token]) - 1.0) / Enum.count(matcher.classifications)
-        Map.put(probabilities, classification, (p_token_given_klass * p_klass) / ((p_token_given_klass * p_klass) + (p_token_given_not_klass * p_not_klass)))
-      end)
-    end)
+  def classify(%Bayesic{port: port}, tokens) do
+    send_command_and_await_response(port, {:classify, tokens})
   end
 
   @doc """
@@ -43,7 +34,8 @@ defmodule Bayesic do
 
   """
   def new do
-    %__MODULE__{classifications: MapSet.new(), classifications_by_token: %{}, tokens_by_classification: %{}}
+    port = Port.open({:spawn, "priv/bayesic_port"}, [:binary, {:packet, 4}])
+    %__MODULE__{port: port}
   end
 
   @doc """
@@ -55,19 +47,19 @@ defmodule Bayesic do
       #Bayesic<>
 
   """
-  def train(%Bayesic{}=matcher, tokens, classification) do
-    classifications = MapSet.put(matcher.classifications, classification)
-    tokens_for_classification = Map.get_lazy(matcher.tokens_by_classification, classification, fn() -> MapSet.new() end)
-    tokens_for_classification = Enum.reduce(tokens, tokens_for_classification, fn(token, tokens_for_classification) ->
-      MapSet.put(tokens_for_classification, token)
-    end)
-    tokens_by_classification = Map.put(matcher.tokens_by_classification, classification, tokens_for_classification)
-    classifications_by_token = Enum.reduce(tokens, matcher.classifications_by_token, fn(token, classifications_by_token) ->
-      set = Map.get_lazy(classifications_by_token, token, fn() -> MapSet.new() end)
-      set = MapSet.put(set, classification)
-      Map.put(classifications_by_token, token, set)
-    end)
-    %{matcher | classifications: classifications, tokens_by_classification: tokens_by_classification, classifications_by_token: classifications_by_token}
+  def train(%Bayesic{port: port}=matcher, tokens, classification) do
+    :ok = send_command_and_await_response(port, {:train, tokens, classification})
+    matcher
+  end
+
+  defp send_command_and_await_response(port, command) do
+    true = Port.command(port, :erlang.term_to_binary(command))
+    receive do
+      {^port, {:data, binary}} ->
+        :erlang.binary_to_term(binary)
+      after 5_000 ->
+        {:error, "timed out waiting for port response"}
+    end
   end
 end
 

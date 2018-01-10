@@ -19,7 +19,7 @@ func main() {
 	}
 
 	matcher := bayesic.New()
-	context := etf.Context{}
+	context := &etf.Context{}
 
 	for {
 		if data, err := port.ReadOne(); err == io.EOF {
@@ -41,7 +41,7 @@ func main() {
 	}
 }
 
-func handleRequest(context etf.Context, port port.Port, matcher *bayesic.Matcher, term interface{}) {
+func handleRequest(context *etf.Context, port port.Port, matcher *bayesic.Matcher, term interface{}) {
 	v := term.(etf.Tuple)
 	if len(v) == 3 && v[0] == etf.Atom("train") {
 		class_bytes := v[2].([]byte)
@@ -58,7 +58,7 @@ func handleRequest(context etf.Context, port port.Port, matcher *bayesic.Matcher
 	}
 }
 
-func sendResponse(context etf.Context, port port.Port, term interface{}) {
+func sendResponse(context *etf.Context, port port.Port, term interface{}) {
 	response := bytes.NewBuffer([]byte{131})
 	err := context.Write(response, term)
 	if err == nil {
