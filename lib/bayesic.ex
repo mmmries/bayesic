@@ -1,11 +1,36 @@
 defmodule Bayesic do
   @moduledoc """
-  A string matcher that uses Bayes' Theorem to calculate the probability of a given match.
+  A data matcher that uses Bayes' Theorem to calculate the probability of a given match.
   This is similar to [Naive Bayes](https://en.wikipedia.org/wiki/Naive_Bayes_classifier),
   but it is optimized for cases where you have many possible classifications, with a
   relatively small amount of data per class.
-  To use this you will need to break your strings into a list of tokens.
-  Common approaches include breaking the string on word boundaries, breaking the string into trigrams etc.
+
+  ## Matching Words
+
+      iex> matcher = Bayesic.Trainer.new()
+      ...>           |> Bayesic.train(["once","upon","a","time"], "story")
+      ...>           |> Bayesic.train(["tonight","on","the","news"], "news")
+      ...>           |> Bayesic.finalize()
+      iex> Bayesic.classify(matcher, ["once","upon"])
+      %{"story" => 1.0}
+      iex> Bayesic.classify(matcher, ["tonight"])
+      %{"news" => 1.0}
+
+  ## Matching Trigrams
+
+      iex> tri = fn(str) -> str |> String.codepoints |> Enum.chunk_every(3, 1, :discard) |> Enum.map(&(Enum.join(&1,""))) end
+      iex> tri.("teeth")
+      ["tee","eet","eth"]
+      iex> matcher = Bayesic.Trainer.new()
+      ...>           |> Bayesic.train(tri.("triassic"), "old")
+      ...>           |> Bayesic.train(tri.("jurassic"), "old")
+      ...>           |> Bayesic.train(tri.("modern"), "new")
+      ...>           |> Bayesic.train(tri.("hipster"), "new")
+      ...>           |> Bayesic.finalize()
+      iex> Bayesic.classify(matcher, tri.("moder"))
+      %{"new" => 1.0}
+      iex> Bayesic.classify(matcher, tri.("jrassic"))
+      %{"old" => 1.0}
   """
 
   @doc """
@@ -14,9 +39,9 @@ defmodule Bayesic do
   ## Examples
 
       iex> matcher = Bayesic.Trainer.new()
-      ...>         |> Bayesic.train(["once","upon","a","time"], "story")
-      ...>         |> Bayesic.train(["tonight","on","the","news"], "news")
-      ...>         |> Bayesic.finalize()
+      ...>           |> Bayesic.train(["once","upon","a","time"], "story")
+      ...>           |> Bayesic.train(["tonight","on","the","news"], "news")
+      ...>           |> Bayesic.finalize()
       iex> Bayesic.classify(matcher, ["once","upon"])
       %{"story" => 1.0}
       iex> Bayesic.classify(matcher, ["tonight"])
@@ -35,8 +60,22 @@ defmodule Bayesic do
     end)
   end
 
+  @doc """
+  After you have loaded up your trainer with example data, this function will run
+  some calculations and turn it into a `%Bayesic.Matcher{}`.
+  We also do some data pruning at this stage to remove tokens that appear frequently.
+  You can customize how much pruning you want to do by passing in the :pruning_threshold option.
+  Tokens that appear in more than the :pruning_percentage of classifications will be removed.
+  This can speed things up quite a bit and it usually doesn't hur your accuracy we are already
+  weighting the tokens by how uniqe they are (see [Bayes Theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem#Statement_of_theorem)).
+
+      iex> Bayesic.Trainer.new()
+      ...> |> Bayesic.train([1, 2, 3], "small numbers")
+      ...> |> Bayesic.finalize(pruning_threshold: 0.1)
+      #Bayesic.Matcher<>
+  """
   def finalize(%Bayesic.Trainer{}=trainer, opts \\ []) do
-    threshold_percent = Keyword.get(opts, :threshold_percent, 0.4)
+    threshold_percent = Keyword.get(opts, :pruning_threshold, 0.5)
     class_count = Enum.count(trainer.classifications)
     pruning_threshold = round(threshold_percent * class_count)
     by_token = Enum.reduce(trainer.classifications_by_token, %{}, fn({token, classifications}, map) ->
