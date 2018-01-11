@@ -36,8 +36,14 @@ defmodule Bayesic do
 
   def finalize(%Bayesic{}=bayesic) do
     class_count = Enum.count(bayesic.classifications)
+    pruning_threshold = round(0.05 * class_count)
     by_token = Enum.reduce(bayesic.classifications_by_token, %{}, fn({token, classifications}, map) ->
-      Map.put(map, token, %{classifications: classifications, count: Enum.count(classifications)})
+      count = Enum.count(classifications)
+      if count > pruning_threshold do
+        map
+      else
+        Map.put(map, token, %{classifications: classifications, count: count})
+      end
     end)
     #by_class = Enum.reduce(bayesic.tokens_by_classification, %{}, fn({class, tokens}, map) ->
     #  Map.put(map, class, %{tokens: tokens, count: count})
