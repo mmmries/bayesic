@@ -7,6 +7,7 @@ defmodule Bayesic.Mixfile do
       version: "0.1.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
+      package: package(),
       deps: deps()
     ]
   end
@@ -23,6 +24,20 @@ defmodule Bayesic.Mixfile do
       {:benchee, "~> 0.11", only: :dev},
       {:csv, "~> 2.0", only: :dev},
       {:ex_doc, "~> 0.18", only: :dev, runtime: false},
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: ["Michael Ries"],
+      licenses: ["MIT"],
+      description: """
+      A probablistic string matcher similar to Naive Bayes, but optimized for many classes with small documents
+      """,
+      links: %{
+        github: "https://github.com/mmmries/bayesic",
+        docs: "http://hexdocs.pm/bayesic"
+      },
     ]
   end
 end
