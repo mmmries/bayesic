@@ -43,4 +43,5 @@ This will benchmark how long it takes to train a matcher with the data in your f
 
 > The reported time for matching is the time to match all of the rows in your second file.
 
-I use this in a project where I have ~10k possible matches and currently this libray trains the matcher in ~390ms and each attempt to classify takes ~2ms.
+I use this in a project where I have ~10k possible matches and currently this libray trains the matcher in ~48ms and each attempt to classify takes ~38µs.
+For my use case `26k` matches per second is "fast enough".
