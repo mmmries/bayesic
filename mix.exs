@@ -18,11 +18,10 @@ defmodule Bayesic.Mixfile do
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:benchee, "~> 0.11"},
-      {:csv, "~> 2.0"},
+      {:benchee, "~> 0.11", only: :dev},
+      {:csv, "~> 2.0", only: :dev},
     ]
   end
 end
