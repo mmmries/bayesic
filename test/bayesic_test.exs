@@ -3,10 +3,11 @@ defmodule BayesicTest do
   doctest Bayesic
 
   setup do
-    matcher = Bayesic.new()
+    matcher = Bayesic.Trainer.new()
               |> Bayesic.train(["once","upon","a","time"], "story")
               |> Bayesic.train(["tonight","on","the","news"], "news")
               |> Bayesic.train(["it","was","the","best","of","times"], "novel")
+              |> Bayesic.finalize
     {:ok, %{matcher: matcher}}
   end
 
