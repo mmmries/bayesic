@@ -47,7 +47,7 @@ defmodule Bayesic do
       iex> Bayesic.classify(matcher, ["tonight"])
       %{"news" => 1.0}
   """
-  @spec classify(%Bayesic.Matcher{}, [String.t]) :: %{String.t => float()}
+  @spec classify(%Bayesic.Matcher{}, [String.t]) :: %{term() => float()}
   def classify(%Bayesic.Matcher{}=matcher, tokens) do
     tokens = Enum.filter(tokens, fn(token) -> Map.has_key?(matcher.by_token, token) end)
     Enum.reduce(tokens, %{}, fn(token, probabilities) ->
