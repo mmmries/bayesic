@@ -4,6 +4,7 @@ defmodule Bayesic.Trainer do
   @doc """
   Sets up a new a trainer so you can load in your matching data
   """
+  @spec new() :: %Bayesic.Trainer{}
   def new do
     %__MODULE__{classifications: MapSet.new(), classifications_by_token: %{}}
   end

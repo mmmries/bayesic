@@ -34,7 +34,7 @@ defmodule Bayesic do
   """
 
   @doc """
-  Take a list of tokens and provide a map of which classifications it might match along with a propbability of each classification..
+  Take a list of tokens and provide a map of which classifications it might match along with a propbability of each classification.
 
   ## Examples
 
@@ -47,6 +47,7 @@ defmodule Bayesic do
       iex> Bayesic.classify(matcher, ["tonight"])
       %{"news" => 1.0}
   """
+  @spec classify(%Bayesic.Matcher{}, [String.t]) :: %{String.t => float()}
   def classify(%Bayesic.Matcher{}=matcher, tokens) do
     tokens = Enum.filter(tokens, fn(token) -> Map.has_key?(matcher.by_token, token) end)
     Enum.reduce(tokens, %{}, fn(token, probabilities) ->
@@ -61,6 +62,8 @@ defmodule Bayesic do
   end
 
   @doc """
+  Compile the trained data into a Matcher for classification.
+
   After you have loaded up your trainer with example data, this function will run
   some calculations and turn it into a `%Bayesic.Matcher{}`.
   We also do some data pruning at this stage to remove tokens that appear frequently.
@@ -74,6 +77,7 @@ defmodule Bayesic do
       ...> |> Bayesic.finalize(pruning_threshold: 0.1)
       #Bayesic.Matcher<>
   """
+  @spec finalize(%Bayesic.Trainer{}, keyword()) :: %Bayesic.Matcher{}
   def finalize(%Bayesic.Trainer{}=trainer, opts \\ []) do
     threshold_percent = Keyword.get(opts, :pruning_threshold, 0.5)
     class_count = Enum.count(trainer.classifications)
@@ -105,6 +109,7 @@ defmodule Bayesic do
       #Bayesic.Trainer<>
 
   """
+  @spec train(%Bayesic.Trainer{}, [String.t], term()) :: %Bayesic.Trainer{}
   def train(%Bayesic.Trainer{}=trainer, tokens, classification) do
     classifications = MapSet.put(trainer.classifications, classification)
     classifications_by_token = Enum.reduce(tokens, trainer.classifications_by_token, fn(token, classifications_by_token) ->
