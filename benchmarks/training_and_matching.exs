@@ -7,7 +7,7 @@ tokenizer = fn(str) ->
 end
 
 trainer = fn(training_data) ->
-  matcher = Bayesic.new()
+  matcher = Bayesic.Trainer.new()
   Enum.reduce(training_data, matcher, fn(row, matcher) ->
     Bayesic.train(matcher, row.tokens, row.id)
   end) |> Bayesic.finalize
@@ -32,7 +32,7 @@ matcher = trainer.(training_data)
 Benchee.run(%{
   "training" => fn -> trainer.(training_data) end,
   "match #{Enum.count(matching_data)} rows" => fn -> classifier.(matcher, matching_data) end,
-}, time: 10, console: [comparison: false])
+}, time: 10)
 
 stats = Enum.reduce(matching_data, %{correct: 0, incorrect: 0, unmatched: 0}, fn(row, stats) ->
   expected_class = row.source_id

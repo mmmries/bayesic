@@ -21,7 +21,7 @@ defmodule Bayesic.Mixfile do
 
   defp deps do
     [
-      {:benchee, "~> 0.11", only: :dev},
+      {:benchee, "~> 1.0", only: :dev},
       {:csv, "~> 2.0", only: :dev},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       {:ex_doc, "~> 0.18", only: :dev, runtime: false},
