@@ -1,12 +1,12 @@
 defmodule Bayesic.Trainer do
-  defstruct [:classifications, :classifications_by_token]
+  defstruct [:table]
 
   @doc """
   Sets up a new a trainer so you can load in your matching data
   """
   @spec new() :: %Bayesic.Trainer{}
   def new do
-    %__MODULE__{classifications: MapSet.new(), classifications_by_token: %{}}
+    %__MODULE__{table: :ets.new(:bayesic_trainer, [:ordered_set])}
   end
 end
 

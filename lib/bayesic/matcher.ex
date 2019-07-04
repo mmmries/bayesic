@@ -1,5 +1,5 @@
 defmodule Bayesic.Matcher do
-  defstruct [:prior, :class_count, :by_token, :by_class]
+  defstruct [:prior, :class_count, :table]
 end
 
 defimpl Inspect, for: Bayesic.Matcher do

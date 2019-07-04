@@ -49,13 +49,14 @@ defmodule Bayesic do
   """
   @spec classify(%Bayesic.Matcher{}, [String.t]) :: %{term() => float()}
   def classify(%Bayesic.Matcher{}=matcher, tokens) do
-    tokens = Enum.filter(tokens, fn(token) -> Map.has_key?(matcher.by_token, token) end)
     Enum.reduce(tokens, %{}, fn(token, probabilities) ->
-      Enum.reduce(matcher.by_token[token][:classifications], probabilities, fn(classification, probabilities) ->
+      classifications = :ets.select(matcher.table, [{{{token, :"$2"}, :"$3"},[],[:"$2"]}])
+      classification_count = Enum.count(classifications)
+      Enum.reduce(classifications, probabilities, fn(classification, probabilities) ->
         p_klass = probabilities[classification] || matcher.prior
         p_not_klass = 1.0 - p_klass
         p_token_given_klass = 1.0
-        p_token_given_not_klass = (matcher.by_token[token][:count] - 1.0) / matcher.class_count
+        p_token_given_not_klass = (classification_count - 1.0) / matcher.class_count
         Map.put(probabilities, classification, (p_token_given_klass * p_klass) / ((p_token_given_klass * p_klass) + (p_token_given_not_klass * p_not_klass)))
       end)
     end)
@@ -68,8 +69,8 @@ defmodule Bayesic do
   some calculations and turn it into a `%Bayesic.Matcher{}`.
   We also do some data pruning at this stage to remove tokens that appear frequently.
   You can customize how much pruning you want to do by passing in the :pruning_threshold option.
-  Tokens that appear in more than the :pruning_percentage of classifications will be removed.
-  This can speed things up quite a bit and it usually doesn't hur your accuracy we are already
+  Tokens that appear in more than the :pruning_threshold percentage of classifications will be removed.
+  This can speed things up quite a bit and it usually doesn't hurt your accuracy. We are already
   weighting the tokens by how uniqe they are (see [Bayes Theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem#Statement_of_theorem)).
 
       iex> Bayesic.Trainer.new()
@@ -78,19 +79,19 @@ defmodule Bayesic do
       #Bayesic.Matcher<>
   """
   @spec finalize(%Bayesic.Trainer{}, keyword()) :: %Bayesic.Matcher{}
-  def finalize(%Bayesic.Trainer{}=trainer, opts \\ []) do
-    threshold_percent = Keyword.get(opts, :pruning_threshold, 0.5)
-    class_count = Enum.count(trainer.classifications)
-    pruning_threshold = round(threshold_percent * class_count)
-    by_token = Enum.reduce(trainer.classifications_by_token, %{}, fn({token, classifications}, map) ->
-      count = Enum.count(classifications)
-      if count > pruning_threshold do
-        map
-      else
-        Map.put(map, token, %{classifications: classifications, count: count})
-      end
-    end)
-    %Bayesic.Matcher{class_count: class_count, by_token: by_token, prior: 1.0 / class_count}
+  def finalize(%Bayesic.Trainer{}=trainer, _opts \\ []) do
+    #threshold_percent = Keyword.get(opts, :pruning_threshold, 0.5)
+    class_count = :ets.select(trainer.table, [{{{:"$1", :"$2"}, :"$3"},[],[:"$2"]}]) |> Enum.uniq |> Enum.count()
+    #pruning_threshold = round(threshold_percent * class_count)
+    #by_token = Enum.reduce(trainer.classifications_by_token, %{}, fn({token, classifications}, map) ->
+    #  count = Enum.count(classifications)
+    #  if count > pruning_threshold do
+    #    map
+    #  else
+    #    Map.put(map, token, %{classifications: classifications, count: count})
+    #  end
+    #end)
+    %Bayesic.Matcher{class_count: class_count, prior: 1.0 / class_count, table: trainer.table}
   end
 
   @doc """
@@ -111,12 +112,10 @@ defmodule Bayesic do
   """
   @spec train(%Bayesic.Trainer{}, [String.t], term()) :: %Bayesic.Trainer{}
   def train(%Bayesic.Trainer{}=trainer, tokens, classification) do
-    classifications = MapSet.put(trainer.classifications, classification)
-    classifications_by_token = Enum.reduce(tokens, trainer.classifications_by_token, fn(token, classifications_by_token) ->
-      set = Map.get_lazy(classifications_by_token, token, fn() -> MapSet.new() end)
-      set = MapSet.put(set, classification)
-      Map.put(classifications_by_token, token, set)
+    tab = trainer.table
+    Enum.each(tokens, fn(token) ->
+      :ets.insert_new(tab, {{token, classification}, true})
     end)
-    %{trainer | classifications: classifications, classifications_by_token: classifications_by_token}
+    trainer
   end
 end
