@@ -57,7 +57,8 @@ defmodule Bayesic do
         p_not_klass = 1.0 - p_klass
         p_token_given_klass = 1.0
         p_token_given_not_klass = (classification_count - 1.0) / matcher.class_count
-        Map.put(probabilities, classification, (p_token_given_klass * p_klass) / ((p_token_given_klass * p_klass) + (p_token_given_not_klass * p_not_klass)))
+        posterior = (p_token_given_klass * p_klass) / ((p_token_given_klass * p_klass) + (p_token_given_not_klass * p_not_klass))
+        Map.put(probabilities, classification, posterior)
       end)
     end)
   end
@@ -79,18 +80,19 @@ defmodule Bayesic do
       #Bayesic.Matcher<>
   """
   @spec finalize(%Bayesic.Trainer{}, keyword()) :: %Bayesic.Matcher{}
-  def finalize(%Bayesic.Trainer{}=trainer, _opts \\ []) do
-    #threshold_percent = Keyword.get(opts, :pruning_threshold, 0.5)
+  def finalize(%Bayesic.Trainer{}=trainer, opts \\ []) do
+    threshold_percent = Keyword.get(opts, :pruning_threshold, 0.5)
     class_count = :ets.select(trainer.table, [{{{:"$1", :"$2"}, :"$3"},[],[:"$2"]}]) |> Enum.uniq |> Enum.count()
-    #pruning_threshold = round(threshold_percent * class_count)
-    #by_token = Enum.reduce(trainer.classifications_by_token, %{}, fn({token, classifications}, map) ->
-    #  count = Enum.count(classifications)
-    #  if count > pruning_threshold do
-    #    map
-    #  else
-    #    Map.put(map, token, %{classifications: classifications, count: count})
-    #  end
-    #end)
+    pruning_threshold = round(threshold_percent * class_count)
+    tokens = :ets.select(trainer.table, [{{{:"$1", :"$2"}, :"$3"},[],[:"$1"]}]) |> Enum.uniq
+
+    Enum.each(tokens, fn(token) ->
+      count =  :ets.select_count(trainer.table, [{{{token, :"$2"}, :"$3"},[],[true]}])
+      if count > pruning_threshold do
+        IO.puts "pruning #{token}"
+        :ets.match_delete(trainer.table, {{token, :_}, :_})
+      end
+    end)
     %Bayesic.Matcher{class_count: class_count, prior: 1.0 / class_count, table: trainer.table}
   end
 
