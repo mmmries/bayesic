@@ -1,16 +1,19 @@
 [training_csv, matching_csv] = System.argv()
 
+#tokenizer = fn(str) ->
+#  str |> String.downcase |> String.split(~r/\b/) |> Enum.map(fn(word) ->
+#    String.replace(word, ~r/[^\w ]/, "")
+#  end) |> Enum.reject(fn(word) -> String.length(word) < 2 end)
+#end
 tokenizer = fn(str) ->
-  str |> String.downcase |> String.split(~r/\b/) |> Enum.map(fn(word) ->
-    String.replace(word, ~r/[^\w ]/, "")
-  end) |> Enum.reject(fn(word) -> String.length(word) < 2 end)
+  str |> String.downcase() |> String.graphemes() |> Enum.chunk_every(3, 1) |> Enum.map(&Enum.join/1)
 end
 
 trainer = fn(training_data) ->
   matcher = Bayesic.Trainer.new()
   Enum.reduce(training_data, matcher, fn(row, matcher) ->
     Bayesic.train(matcher, row.tokens, row.id)
-  end) |> Bayesic.finalize
+  end) |> Bayesic.finalize(pruning_threshold: 0.05)
 end
 
 classifier = fn(matcher, matching_data) ->

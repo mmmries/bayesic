@@ -45,3 +45,41 @@ This will benchmark how long it takes to train a matcher with the data in your f
 
 I use this in a project where I have ~10k possible matches and currently this libray trains the matcher in ~48ms and each attempt to classify takes ~38µs.
 For my use case `26k` matches per second is "fast enough".
+
+## ETS Version?
+
+mix run benchmarks/training_and_matching.exs benchmarks/training.csv benchmarks/matching.csv
+
+# master
+
+15,052 training examples
+41 matching samples
+
+%{correct: 1, incorrect: 5, unmatched: 35}
+
+* training
+  * 44.74ms to train and finalize
+  * 31.99MB allocated
+* matching
+  * 28.73ms TOTAL
+  * 24.67MB TOTAL
+  * 701us per match
+  * 0.6MB per match
+
+# ETS v1
+
+* training
+  * 56.35ms
+  * 10.18MB
+* matching
+  * 50.70ms
+  * 31.78MB
+
+# ETS v2 (with pruning)
+
+* training
+  * 84.45ms
+  * 18.91MB
+* matching
+  * 56.24ms
+  * 31.78MB
