@@ -9,9 +9,10 @@ This is especially useful if you have two large lists of names/titles/descriptio
 Pull in this library from hex.pm. Then in your project you can do the following.
 
 ```elixir
-matcher = Bayesic.new()
+matcher = Bayesic.Trainer.new()
           |> Bayesic.train(["it","was","the","best","of","times"], "novel")
           |> Bayesic.train(["tonight","on","the","seven","o'clock"], "news")
+          |> Bayesic.finalize()
 
 Bayesic.classify(matcher, ["the","best","of"])
 # => %{"novel" => 1.0, "news" => 0.667}
