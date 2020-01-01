@@ -8,7 +8,9 @@ defmodule Bayesic.Mixfile do
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
       package: package(),
-      deps: deps()
+      deps: deps(),
+      compilers: [:rustler] ++ Mix.compilers(),
+      rustler_crates: [bayesic_nif: []]
     ]
   end
 
@@ -21,6 +23,8 @@ defmodule Bayesic.Mixfile do
 
   defp deps do
     [
+      {:rustler, "~> 0.21"},
+
       {:benchee, "~> 1.0", only: :dev},
       {:csv, "~> 2.0", only: :dev},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
