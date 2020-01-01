@@ -28,6 +28,24 @@ It records which tokens it has seen for each possible classification. Later when
 
 Tokens which exist in many records (ie not very unique) have a smaller impact on the probability of a match and more unique tokens have a larger impact.
 
+## Performance
+
+Performance varies a lot depending on the size and type of your data.
+I have a built in a benchmark that you can run via `mix run benchmarks/training_and_classifying.exs`.
+This benchmark loads in 60k movies and tokenizes their titles by finding all the words (downcased) in the title of the movie.
+We benchmark the time it takes to train on that dataset and also the time it takes to do a specific classification as well as a more generic classification.
+
+Currently this benchmark shows the following results on my laptop:
+
+```
+Name                    ips        average  deviation         median         99th %
+match 1 word        92.36 K       10.83 μs  ±3286.36%           0 μs           0 μs
+match 3 words       37.77 K       26.48 μs  ±2157.82%           0 μs           0 μs
+training          0.00086 K  1158191.81 μs    ±26.79%  1262370.70 μs  1550091.70 μs
+```
+
+This means it takes ~1.2sec to train the classifier on 60k titles and 10 - 26µs to do a classification of tokens on that classifier.
+
 ## Will It Work For My Dataset?
 
 I don't know, but you can pretty easily test it using the `benchmarks/training_and_matching.exs` script in this project.
@@ -36,7 +54,7 @@ Just generate 2 CSV files:
 * The first file should have 2 columns `source_string` and `source_id`
 * The second file should have 2 columns `match_string` and `source_id`
 
-Then run `mix run benchmarks/training_and_matching.exs path/to/first_file.csv path/to/second_file.csv`.
+Then run `mix run benchmarks/test_your_data.exs path/to/first_file.csv path/to/second_file.csv`.
 
 > The benchmark contains a sample tokenizer that breaks strings into words, removes punctuation, throws away single-letter words and downcases. You can replace the `tokenizer` function in the benchmark to try other forms of tokenization.
 
