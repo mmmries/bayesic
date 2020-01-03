@@ -21,9 +21,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bayesic"
+version = "0.1.0"
+
+[[package]]
 name = "bayesic_nif"
 version = "0.1.0"
 dependencies = [
+ "bayesic 0.1.0",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustler 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
