@@ -1,17 +1,17 @@
 tokenizer = fn(str) ->
-  str |> String.downcase |> String.split(~r/\b/) |> Enum.map(fn(word) ->
-    String.replace(word, ~r/[^\w ]/, "")
+  str |> String.downcase |> String.split(~r/\b/u) |> Enum.map(fn(word) ->
+    String.replace(word, ~r/[^\w ]/u, "")
   end) |> Enum.reject(fn(word) -> String.length(word) < 2 end)
 end
 
 IO.puts "loading in training data..."
 
 training_data = "benchmarks/imdb_titles.csv" |> File.stream! |> CSV.decode!(headers: true) |> Enum.map(fn(row) ->
-  %{string: row["name"], id: row["id"], tokens: tokenizer.(row["name"])} |> IO.inspect()
+  %{string: row["name"], id: row["id"], tokens: tokenizer.(row["name"])}
 end)
 
 trainer = fn(training_data) ->
-  matcher = Bayesic.Trainer.new()
+  matcher = Bayesic.init()
   Enum.reduce(training_data, matcher, fn(row, matcher) ->
     Bayesic.train(matcher, row.tokens, row.id)
   end) |> Bayesic.finalize(pruning_threshold: 0.1)

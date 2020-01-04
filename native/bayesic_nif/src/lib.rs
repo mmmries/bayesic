@@ -34,7 +34,7 @@ fn load(env: Env, _info: Term) -> bool {
 
 fn init<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
   let resource = ResourceArc::new(BayesicResource(Mutex::new(Bayesic::new())));
-  Ok((atoms::ok(), resource).encode(env))
+  Ok(resource.encode(env))
 }
 
 fn train<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
@@ -62,7 +62,7 @@ fn classify<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
   };
   let tokens: Vec<String> = args[1].decode()?;
 
-  let mut bayesic = match resource.0.try_lock() {
+  let bayesic = match resource.0.try_lock() {
     Err(_) => return Ok((atoms::error(), atoms::lock_fail()).encode(env)),
     Ok(guard) => guard,
   };
@@ -73,7 +73,7 @@ fn classify<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     result.push((key, value));
   }
 
-  Ok((atoms::ok(), result).encode(env))
+  Ok(result.encode(env))
 }
 
 fn prune<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {

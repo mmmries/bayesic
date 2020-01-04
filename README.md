@@ -39,9 +39,9 @@ Currently this benchmark shows the following results on my laptop:
 
 ```
 Name                    ips        average  deviation         median         99th %
-match 1 word        92.36 K       10.83 μs  ±3286.36%           0 μs           0 μs
-match 3 words       37.77 K       26.48 μs  ±2157.82%           0 μs           0 μs
-training          0.00086 K  1158191.81 μs    ±26.79%  1262370.70 μs  1550091.70 μs
+match 1 word         1.21 M     0.00083 ms  ±2729.82%           0 ms           0 ms
+match 3 words        0.74 M     0.00136 ms  ±1631.93%           0 ms           0 ms
+training          0.00001 M      142.06 ms     ±5.56%      139.68 ms      170.46 ms
 ```
 
 This means it takes ~1.2sec to train the classifier on 60k titles and 10 - 26µs to do a classification of tokens on that classifier.
